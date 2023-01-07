@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:inbody/text_field_util.dart';
 
 import 'in_body_chart_view.dart';
 
@@ -61,7 +63,10 @@ class _MyHomePageState extends State<MyHomePage> {
   InBodyPaint inBodyPaint = InBodyPaint.male;
 
   //體脂率
-  var bodyFatPercentage = 0.0;
+  var standerLowBodyFatPercentage = 0.0;
+  var standerHighBodyFatPercentage = 0.0;
+  var valueBodyFatPercentage = 0.0;
+
   var basalMetabolicRate = 0.0;
 
   @override
@@ -72,32 +77,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
     var textEditorHeight = SizedBox(
       width: textEditorWidth,
-      child: TextField(
-        keyboardType: TextInputType.number,
+      child: TextFieldUtil.numberInputFormat(TextField(
         onChanged: (text) {
           height = double.parse(text);
         },
-      ),
+      )),
     );
 
     var textEditorWeight = SizedBox(
       width: textEditorWidth,
-      child: TextField(
-        keyboardType: TextInputType.number,
+      child: TextFieldUtil.numberInputFormat(TextField(
         onChanged: (text) {
           weight = double.parse(text);
         },
-      ),
+      )),
     );
 
     var textEditorAge = SizedBox(
       width: textEditorWidth,
-      child: TextField(
-        keyboardType: TextInputType.number,
+      child: TextFieldUtil.numberInputFormat(TextField(
         onChanged: (text) {
           age = int.parse(text);
         },
-      ),
+      )),
     );
 
     //https://www.commonhealth.com.tw/article/87332
@@ -142,16 +144,42 @@ class _MyHomePageState extends State<MyHomePage> {
       if (age > 0) {
         basalMetabolicRate = 10 * weight + 6.25 * height;
 
+        //［30歲以前］
+        //女生「體脂率」正常：17%-24%
+        //男生「體脂率」正常：14%-20%
+
+        //［30歲以後］
+        //女生「體脂率」正常：20%-27%：
+        //男生「體脂率」正常：17%-23%
+
         switch (sex) {
           case Sex.male:
-            bodyFatPercentage = 1.2 * valueBMI2 + 0.23 * age - 5.4 - 10.8;
+            valueBodyFatPercentage = 1.2 * valueBMI2 + 0.23 * age - 5.4 - 10.8;
+
+            if (age < 30) {
+              standerLowBodyFatPercentage = 14.0;
+              standerHighBodyFatPercentage = 20.0;
+            } else {
+              standerLowBodyFatPercentage = 17.0;
+              standerHighBodyFatPercentage = 23.0;
+            }
+
             if (age >= 50) {
               basalMetabolicRate -= age;
               basalMetabolicRate += 5;
             }
             break;
           case Sex.female:
-            bodyFatPercentage = 1.2 * valueBMI2 + 0.23 * age - 5.4;
+            valueBodyFatPercentage = 1.2 * valueBMI2 + 0.23 * age - 5.4;
+
+            if (age < 30) {
+              standerLowBodyFatPercentage = 17.0;
+              standerHighBodyFatPercentage = 24.0;
+            } else {
+              standerLowBodyFatPercentage = 20.0;
+              standerHighBodyFatPercentage = 27.0;
+            }
+
             if (age >= 50) {
               basalMetabolicRate -= age;
               basalMetabolicRate -= 161;
@@ -193,7 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         width: 250,
                         child: CustomPaint(
                             painter: InBodyChartPainter(
-                              inBodyPaint: inBodyPaint,
+                          inBodyPaint: inBodyPaint,
                           processValue: weight,
                           type: Type(0.0, standardLowValue, standardValue,
                               standardHighValue, highestValue),
@@ -211,8 +239,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         width: 250,
                         child: CustomPaint(
                             painter: InBodyChartPainter(
-
-                              inBodyPaint: inBodyPaint,
+                          inBodyPaint: inBodyPaint,
                           processValue: valueBMI2,
                           type: const Type(0.0, 18.5, 22.0, 24.0, 55.0),
                         )),
@@ -220,16 +247,15 @@ class _MyHomePageState extends State<MyHomePage> {
                     ]),
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Text(
-                          "體脂率:   \n${InBodyChartPainter.format(bodyFatPercentage)}%"),
+                          "體脂率:   \n${InBodyChartPainter.format(valueBodyFatPercentage)}%"),
                       SizedBox(
                         height: 140,
                         width: 250,
                         child: CustomPaint(
-
                             painter: InBodyChartPainter(
-                              inBodyPaint: inBodyPaint,
-                          processValue: bodyFatPercentage,
-                          type: const Type(0.0, 10.0, 15.0, 20.0, 50.0),
+                          inBodyPaint: inBodyPaint,
+                          processValue: valueBodyFatPercentage,
+                          type: Type(0.0, standerLowBodyFatPercentage, (standerLowBodyFatPercentage+standerHighBodyFatPercentage)/2, standerHighBodyFatPercentage, 50.0),
                         )),
                       ),
                     ]),
