@@ -289,7 +289,7 @@ class InBodyChartPainter extends CustomPainter {
 }
 
 enum  InBodyPaint{
-  male( Color(0xff0a7aff),Color(0xff0356e9),Color(0xff002ba5)),
+  male( Color(0xff0aff7a),Color(0xff03e956),Color(0xff00a52b)),
   female( Color(0xffff0a7a),Color(0xffe90356),Color(0xffa5002b)),
   ;
   const InBodyPaint(
